@@ -254,7 +254,7 @@ header{
 }
 .tab-btn{
   flex:1; white-space:nowrap; border:none; background:var(--bg2); color:var(--text2);
-  padding:10px 14px; border-radius:10px; font-size:15px; font-weight:600; min-height:40px;
+  padding:10px 14px; border-radius:10px; font-size:14px; font-weight:600; min-height:40px; display:flex;align-items:center;justify-content:center;gap:5px
 }
 .tab-btn.active{background:var(--accent);color:#fff}
 main{flex:1;padding:0 16px 120px}
@@ -290,7 +290,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .thumb .num{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:12px;padding:2px 6px;border-radius:6px;backdrop-filter:blur(4px)}
 .empty{padding:28px;text-align:center;color:var(--text2);font-size:15px;border:1px dashed var(--border);border-radius:12px;background:var(--bg)}
 .options{display:grid;gap:12px;margin:14px 0}
-.chip{display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:12px 14px;border-radius:12px;border:1px solid var(--border)}
+.chip{display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:12px 14px;border-radius:12px;border:1px solid var(--border);gap:10px}
 .chip select{width:auto;min-width:120px;padding:8px 12px;font-size:16px;background:var(--card)}
 .action-bar{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
@@ -298,18 +298,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
   border-top:0.5px solid var(--border); padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
 }
 .action-inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:50;max-width:90%;text-align:center}
 .toast.show{opacity:1}
 .hidden{display:none !important}
 footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12px}
+
+/* PLANOS */
+.plan-card{position:relative;padding:20px;border:2px solid var(--border);transition:.2s}
+.plan-card.popular{border-color:var(--accent);box-shadow:0 8px 24px color-mix(in srgb, var(--accent) 18%, transparent);transform:translateY(-2px)}
+.plan-badge{position:absolute;top:-10px;right:14px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:5px 12px;border-radius:20px;letter-spacing:.4px;text-transform:uppercase;box-shadow:0 2px 8px color-mix(in srgb, var(--accent) 40%, transparent)}
+.plan-price{font-size:34px;font-weight:800;margin:6px 0 4px;letter-spacing:-0.5px}
+.plan-price small{font-size:14px;font-weight:600;color:var(--text2)}
+.plan-features{list-style:none;padding:0;margin:14px 0 18px}
+.plan-features li{padding:7px 0;font-size:15px;display:flex;gap:8px;align-items:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal.hidden{display:none}
+.modal-card{background:var(--card);width:100%;max-width:680px;border-radius:24px 24px 0 0;padding:22px;box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:slideUp .28s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.switch{position:relative;display:inline-block;width:50px;height:30px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--bg2);border:1px solid var(--border);border-radius:30px;transition:.2s}
+.switch span:before{content:"";position:absolute;height:26px;width:26px;left:2px;top:1px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch input:checked+span{background:var(--accent);border-color:var(--accent)}
+.switch input:checked+span:before{transform:translateX(20px)}
+.pro-tag{background:linear-gradient(135deg,#0055ff,#0a84ff);color:white;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;letter-spacing:.3px}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="h1">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--accent)"/><path d="M14 3v5h5" fill="white" opacity=".3"/><text x="7" y="16" font-size="7" fill="white" font-weight="700">PDF</text></svg>
-      PDF Rápido - iPhone
+      <svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#0a84ff"/><stop offset="1" stop-color="#0055ff"/></linearGradient></defs><circle cx="12" cy="12" r="12" fill="url(#g)"/><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="white" opacity=".15" transform="translate(0 4) scale(.9)"/><path d="M9 9h6v2H9zM9 13h6v2H9zM9 17h4v2H9z" fill="white"/></svg>
+      PDF Rápido
     </div>
   </header>
 
@@ -323,6 +343,10 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
     <button class="tab-btn active" data-tab="texto">Texto → PDF</button>
     <button class="tab-btn" data-tab="fotos">Fotos → PDF</button>
     <button class="tab-btn" data-tab="mesclar">Mesclar</button>
+    <button class="tab-btn" data-tab="planos">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right:2px"><path d="M5 4l3 4 4-2 4 2 3-4 2 9-4 4-5-2-5 2-4-4 2-9z"/><path d="M5 13l7 3 7-3" stroke="white" stroke-opacity=".3" fill="none"/></svg>
+      Planos
+    </button>
   </nav>
 
   <main>
@@ -354,6 +378,7 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
               <button data-a="justify">☷</button>
             </div>
           </div>
+        </div>
         <button class="btn primary" id="btnGerarTexto" style="margin-top:16px">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
           Gerar PDF
@@ -379,6 +404,10 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
         <div id="gridFotos" class="grid"></div>
         <div id="emptyFotos" class="empty">Nenhuma foto ainda. Toque em Adicionar Fotos.</div>
         <div class="options">
+          <div class="chip" id="ocrChip">
+            <span>Extrair texto da foto <span class="pro-tag">PRO</span></span>
+            <label class="switch"><input type="checkbox" id="ocrToggle"><span></span></label>
+          </div>
           <div class="chip">
             <span>Tamanho da página</span>
             <select id="fotoFormato"><option>A4</option><option>Carta</option></select>
@@ -428,6 +457,72 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
         <button class="btn primary" id="btnGerarMerge">Mesclar em PDF</button>
       </div>
     </section>
+
+    <!-- ABA PLANOS -->
+    <section id="tab-planos" class="hidden">
+      <div class="card" style="text-align:center;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--card)),var(--card))">
+        <div style="font-size:15px;color:var(--text2)">Seu plano atual</div>
+        <div style="font-size:26px;font-weight:800;margin-top:4px" id="currentPlanName">Grátis</div>
+      </div>
+
+      <div class="card plan-card" data-plan="gratis">
+        <h3 style="margin:0 0 4px;font-size:22px">Grátis</h3>
+        <div class="plan-price">R$0 <small>/sempre</small></div>
+        <ul class="plan-features">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> 3 PDFs por dia</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> 1 foto por PDF</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Marca d'água "PDF Rápido"</li>
+        </ul>
+        <button class="btn secondary" data-subscribe="gratis">Usar Grátis</button>
+      </div>
+
+      <div class="card plan-card popular" data-plan="criador">
+        <div class="plan-badge">Mais popular</div>
+        <h3 style="margin:0 0 4px;font-size:22px">Criador</h3>
+        <div class="plan-price">R$9,90 <small>/mês</small></div>
+        <ul class="plan-features">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> PDFs ilimitados</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Sem marca d'água</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Até 20 fotos por PDF</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Suporte prioritário</li>
+        </ul>
+        <button class="btn primary" data-subscribe="criador">Assinar Criador</button>
+      </div>
+
+      <div class="card plan-card" data-plan="pro">
+        <h3 style="margin:0 0 4px;font-size:22px">Pro</h3>
+        <div class="plan-price">R$19,90 <small>/mês</small></div>
+        <div style="font-size:13px;color:var(--text2);margin:-4px 0 8px">ou R$199/ano <b style="color:var(--green)">(2 meses grátis)</b></div>
+        <ul class="plan-features">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Tudo do Criador</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> OCR de texto em fotos</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Temas personalizados</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Exportação em alta qualidade</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Acesso antecipado</li>
+        </ul>
+        <button class="btn primary" data-subscribe="pro">Assinar Pro</button>
+      </div>
+
+      <div class="card" id="proCustom">
+        <div class="label">Personalização Pro</div>
+        <div class="chip">
+          <span>Tema do app</span>
+          <select id="themeSelect">
+            <option value="default">Padrão iOS</option>
+            <option value="blue">Azul Circular</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Código de assinante</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="codigoInput" placeholder="CRIADOR2025 ou PRO2025" autocapitalize="characters">
+          <button class="btn secondary" id="btnCodigo" style="width:auto;padding:0 18px;min-height:48px">Desbloquear</button>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Para testes locais, sem cobrança.</div>
+      </div>
+    </section>
   </main>
 
   <div class="action-bar">
@@ -444,7 +539,27 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
   </div>
 
   <div id="toast" class="toast"></div>
-  <footer>100% offline • Funciona no Safari • PDF Rápido v1</footer>
+  <footer>100% offline • Funciona no Safari • PDF Rápido v2</footer>
+</div>
+
+<!-- Modal Pagamento -->
+<div id="payModal" class="modal hidden">
+  <div class="modal-card">
+    <div style="width:40px;height:4px;background:var(--bg2);border-radius:2px;margin:0 auto 14px"></div>
+    <h2 id="modalTitle" style="margin:0 0 6px;font-size:24px;font-weight:800">Assinar Plano</h2>
+    <p id="modalDesc" style="color:var(--text2);margin:0 0 18px;font-size:15px">Demonstração — sem cobrança real</p>
+    <div style="display:grid;gap:10px">
+      <button class="btn primary" id="payApple" style="background:#000">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.5 11.5c0-2 1.6-3 1.7-3-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 0-.7-.7-1.7-1-2.7-1-2.3 0-4.4 1.3-5.6 3.3-2.4 4.1-.6 10.2 1.7 13.5.8 1.2 1.8 2.5 3.1 2.5 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.5-1-2.5-3.6z"/></svg>
+        Pagar com Apple Pay
+      </button>
+      <button class="btn primary" id="payPix" style="background:#32BCAD">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 12l8-8 8 8-8 8-8-8z"/><path d="M12 4v16"/></svg>
+        Pagar com Pix
+      </button>
+      <button class="btn secondary" id="payCancel" style="color:var(--red);background:transparent;border:none">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -452,7 +567,17 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
 <script>
 (() => {
   const $ = s => document.querySelector(s);
-  const toast = (msg) => { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); };
+  const toast = (msg) => { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); };
+
+  // PLANOS
+  const PLAN_KEY = 'plano_ativo';
+  const PDF_COUNT_KEY = 'pdf_count';
+  const getPlan = () => localStorage.getItem(PLAN_KEY) || 'gratis';
+  const setPlan = (p) => { localStorage.setItem(PLAN_KEY, p); updatePlanUI(); };
+  const getToday = () => new Date().toISOString().slice(0,10);
+  const getPdfCount = () => { try{ const d=JSON.parse(localStorage.getItem(PDF_COUNT_KEY)||'{}'); return d[getToday()]||0 }catch{return 0} };
+  const incPdfCount = () => { const d=JSON.parse(localStorage.getItem(PDF_COUNT_KEY)||'{}'); const k=getToday(); d[k]=(d[k]||0)+1; localStorage.setItem(PDF_COUNT_KEY, JSON.stringify(d)); };
+  const addWatermark = (doc) => { if(getPlan()!=='gratis') return; const pages=doc.internal.getNumberOfPages(); for(let i=1;i<=pages;i++){ doc.setPage(i); doc.setFontSize(9); doc.setTextColor(150); try{doc.setGState(new doc.GState({opacity:0.45}))}catch{} const w=doc.internal.pageSize.getWidth(); const h=doc.internal.pageSize.getHeight(); doc.text('PDF Rápido', w-18, h-10, {align:'right'}); } };
 
   // PWA tip
   const tip = $('#tip');
@@ -464,7 +589,9 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
     btn.onclick = () => {
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      ['texto','fotos','mesclar'].forEach(id=>{ $('#tab-'+id).classList.toggle('hidden', btn.dataset.tab!==id); });
+      document.querySelectorAll('main section').forEach(sec=>{
+        sec.classList.toggle('hidden', sec.id !== 'tab-'+btn.dataset.tab);
+      });
       saveConfig();
     };
   });
@@ -514,11 +641,47 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
     b.classList.add('active'); state.align=b.dataset.a; saveConfig();
   };
 
+  // Plan UI
+  const updatePlanUI = () => {
+    const plan = getPlan();
+    $('#currentPlanName').textContent = plan==='gratis'?'Grátis':plan==='criador'?'Criador':'Pro';
+    document.querySelectorAll('.plan-card').forEach(card=>{
+      const btn = card.querySelector('[data-subscribe]');
+      const p = card.dataset.plan;
+      if(p===plan){
+        btn.textContent='Plano Atual'; btn.disabled=true; btn.className='btn secondary';
+      }else{
+        btn.disabled=false; btn.textContent = p==='gratis'?'Usar Grátis':`Assinar ${p.charAt(0).toUpperCase()+p.slice(1)}`; btn.className='btn '+(p==='gratis'?'secondary':'primary');
+      }
+    });
+    $('#proCustom').style.display = plan==='pro'?'block':'none';
+    $('#ocrChip').style.opacity = plan==='pro'?'1':'0.55';
+    const theme = localStorage.getItem('theme_choice')||'default';
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if(plan==='pro' && theme==='blue'){
+      document.documentElement.style.setProperty('--accent','#0055ff');
+      document.documentElement.style.setProperty('--accent-press','#003ecc');
+    }else{
+      document.documentElement.style.setProperty('--accent', isDark?'#0a84ff':'#007aff');
+      document.documentElement.style.setProperty('--accent-press', isDark?'#0060df':'#0056d6');
+    }
+    if($('#themeSelect')) $('#themeSelect').value = theme;
+  };
+  const showUpgrade = (msg) => { toast(msg||'Atualize para continuar'); document.querySelector('[data-tab="planos"]').click(); };
+  const checkLimits = (type, count=0) => {
+    const plan=getPlan();
+    if(type==='pdf' && plan==='gratis' && getPdfCount()>=3){ showUpgrade('Limite de 3 PDFs/dia no Grátis. Atualize para Criador'); return false; }
+    if(type==='fotos'){
+      if(plan==='gratis' && count>1){ showUpgrade('Plano Grátis: até 1 foto por PDF. Atualize para Criador'); return false; }
+      if(plan==='criador' && count>20){ showUpgrade('Criador: até 20 fotos. Faça upgrade para Pro'); return false; }
+    }
+    return true;
+  };
+
   // Enable share/download
   const setPdf = (blob,name)=>{
     state.lastBlob=blob; state.lastName=name;
     $('#btnShare').disabled=false; $('#btnDownload').disabled=false;
-    $('#btnShare').style.opacity=1; $('#btnDownload').style.opacity=1;
   };
 
   $('#btnShare').onclick = async ()=>{
@@ -530,7 +693,7 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
       } else {
         toast('Compartilhar não suportado. Use Baixar.');
       }
-    }catch(e){ /* cancelado */ }
+    }catch(e){}
   };
   $('#btnDownload').onclick = ()=>{
     if(!state.lastBlob) return;
@@ -541,6 +704,7 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
 
   // TEXT -> PDF
   $('#btnGerarTexto').onclick = () => {
+    if(!checkLimits('pdf')) return;
     const { jsPDF } = window.jspdf;
     const title = $('#titulo').value.trim();
     const content = $('#texto').value.trim();
@@ -563,9 +727,10 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
       doc.text(line, x, y, {align:state.align==='justify'?'left':state.align, maxWidth:maxW});
       y+=lineH;
     });
+    addWatermark(doc);
     const blob = doc.output('blob');
     const name = (title||'texto').replace(/[^\w\-]+/g,'_').slice(0,40)+'.pdf';
-    setPdf(blob,name); saveConfig(); toast('PDF de texto criado!');
+    setPdf(blob,name); incPdfCount(); saveConfig(); toast('PDF de texto criado!');
   };
 
   // PHOTOS HANDLING
@@ -612,6 +777,8 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
     const margin = parseInt(opts.margin)||0;
     const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
     const maxW = pageW - margin*2; const maxH = pageH - margin*2;
+    const isPro = getPlan()==='pro';
+    const comp = isPro ? 'SLOW' : 'FAST';
     for(let i=0;i<images.length;i++){
       if(i>0) doc.addPage();
       const img = images[i].data;
@@ -619,26 +786,41 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
       const r = props.width/props.height;
       let w=maxW, h=w/r; if(h>maxH){ h=maxH; w=h*r; }
       const x=(pageW-w)/2; const y=(pageH-h)/2;
-      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', x, y, w, h, undefined, 'FAST');
+      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', x, y, w, h, undefined, comp);
     }
+    addWatermark(doc);
     return doc;
   }
 
   $('#btnGerarFotos').onclick = async ()=>{
     if(state.fotos.length===0){ toast('Adicione fotos primeiro'); return; }
+    if(!checkLimits('pdf')) return;
+    if(!checkLimits('fotos', state.fotos.length)) return;
     const doc = await createPdfFromImages(state.fotos, {
       format: $('#fotoFormato').value,
       orientation: $('#fotoOrient').value,
       margin: $('#fotoMargem').value
     });
+    const isPro = getPlan()==='pro';
+    if(isPro && $('#ocrToggle').checked){
+      doc.addPage();
+      doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(0,85,255);
+      doc.text('Texto extraído (OCR) — PRO', 40, 60);
+      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(60);
+      doc.text('Demonstração: em uma versão completa, o texto das fotos apareceria aqui.', 40, 86, {maxWidth:500});
+      state.fotos.slice(0,3).forEach((f,i)=>{ doc.text(`• Foto ${i+1}: [exemplo de texto reconhecido]`, 40, 120+i*22); });
+    }
     const blob = doc.output('blob');
     setPdf(blob, `fotos_${new Date().toISOString().slice(0,10)}.pdf`);
+    incPdfCount();
     toast('PDF com fotos criado!');
   };
 
   // Merge layout
   $('#btnGerarMerge').onclick = async ()=>{
     if(state.merge.length===0){ toast('Adicione imagens'); return; }
+    if(!checkLimits('pdf')) return;
+    if(!checkLimits('fotos', state.merge.length)) return;
     const { jsPDF } = window.jspdf;
     const layout = parseInt($('#mergeLayout').value);
     const format = $('#mergeFormato').value.toLowerCase()==='carta'?'letter':'a4';
@@ -651,9 +833,10 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
     const perPage = cols*rows;
     const cellW = (pageW - margin*2 - gap*(cols-1)) / cols;
     const cellH = (pageH - margin*2 - gap*(rows-1)) / rows;
+    const isPro = getPlan()==='pro';
+    const comp = isPro ? 'SLOW':'FAST';
 
     for(let i=0;i<state.merge.length;i++){
-      const pageIndex = Math.floor(i/perPage);
       const idxInPage = i%perPage;
       if(i>0 && idxInPage===0) doc.addPage();
       const col = idxInPage % cols;
@@ -665,19 +848,58 @@ footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12p
       const r = props.width/props.height;
       let w=cellW, h=w/r; if(h>cellH){ h=cellH; w=h*r; }
       const dx = x + (cellW-w)/2; const dy = y + (cellH-h)/2;
-      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', dx, dy, w, h, undefined, 'FAST');
-      // borda sutil
+      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', dx, dy, w, h, undefined, comp);
       doc.setDrawColor(230); doc.setLineWidth(0.5); doc.rect(x,y,cellW,cellH);
     }
+    addWatermark(doc);
     const blob = doc.output('blob');
     setPdf(blob, `mesclado_${layout}x_${new Date().toISOString().slice(0,10)}.pdf`);
+    incPdfCount();
     toast('PDF mesclado criado!');
   };
+
+  // PLANOS - eventos
+  document.querySelectorAll('[data-subscribe]').forEach(b=>{
+    b.onclick = ()=>{
+      const p = b.dataset.subscribe;
+      if(p==='gratis'){ setPlan('gratis'); toast('Plano Grátis ativado'); return; }
+      openPay(p);
+    };
+  });
+  const openPay = (plan)=>{
+    $('#payModal').classList.remove('hidden');
+    $('#modalTitle').textContent = plan==='criador'?'Assinar Criador':'Assinar Pro';
+    $('#modalDesc').textContent = plan==='criador'?'R$9,90/mês • Teste local':'R$19,90/mês ou R$199/ano • Teste local';
+    $('#payModal').dataset.plan = plan;
+  };
+  const doPay = ()=>{
+    const plan = $('#payModal').dataset.plan;
+    $('#payModal').classList.add('hidden');
+    toast('Pagamento simulado aprovado ✓');
+    setTimeout(()=>{ setPlan(plan); }, 500);
+  };
+  $('#payCancel').onclick = ()=> $('#payModal').classList.add('hidden');
+  $('#payApple').onclick = doPay;
+  $('#payPix').onclick = doPay;
+
+  $('#btnCodigo').onclick = ()=>{
+    const code = $('#codigoInput').value.trim().toUpperCase();
+    if(code==='CRIADOR2025'){ setPlan('criador'); toast('Criador ativado!'); }
+    else if(code==='PRO2025'){ setPlan('pro'); toast('Pro ativado!'); }
+    else if(code==='GRATIS'){ setPlan('gratis'); toast('Voltou ao Grátis'); }
+    else toast('Código inválido');
+    $('#codigoInput').value='';
+  };
+  $('#themeSelect')?.addEventListener('change', e=>{ localStorage.setItem('theme_choice', e.target.value); updatePlanUI(); toast('Tema atualizado'); });
+  $('#ocrToggle')?.addEventListener('change', e=>{
+    if(getPlan()!=='pro'){ e.target.checked=false; showUpgrade('Recurso Pro: OCR de texto em fotos'); }
+    else toast('OCR pronto');
+  });
 
   // Init
   loadConfig();
   fotosUI.render(); mergeUI.render();
-  // iOS fullscreen safe
+  updatePlanUI();
   document.addEventListener('touchstart',()=>{}, {passive:true});
 })();
 </script>
