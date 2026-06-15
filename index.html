@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>PDF Rápido - iPhone</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PDF Rápido">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<style>
+:root{
+  --bg:#f2f2f7; --bg2:#e5e5ea; --card:#ffffff; --text:#000000; --text2:#6e6e73;
+  --border:rgba(0,0,0,0.1); --accent:#007aff; --accent-press:#0056d6;
+  --red:#ff3b30; --green:#34c759; --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#000000; --bg2:#1c1c1e; --card:#1c1c1e; --text:#ffffff; --text2:#98989f; --border:rgba(255,255,255,0.12); --accent:#0a84ff; --accent-press:#0060df; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+}
+.app{max-width:680px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header{
+  position:sticky;top:0;z-index:20; backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  background:color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:0.5px solid var(--border);
+  padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top));
+}
+.h1{font-size:22px;font-weight:700;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
+.h1 svg{width:28px;height:28px}
+.tip{
+  margin:12px 16px 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;
+  font-size:14px;line-height:1.3;color:var(--text2);display:flex;gap:10px;align-items:flex-start
+}
+.tip b{color:var(--text);font-weight:600}
+.tip button{margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;line-height:1;padding:0 4px}
+.tabs{
+  display:flex; gap:6px; padding:10px 16px; margin-top:4px; overflow-x:auto; scrollbar-width:none;
+}
+.tab-btn{
+  flex:1; white-space:nowrap; border:none; background:var(--bg2); color:var(--text2);
+  padding:10px 14px; border-radius:10px; font-size:15px; font-weight:600; min-height:40px;
+}
+.tab-btn.active{background:var(--accent);color:#fff}
+main{flex:1;padding:0 16px 120px}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-top:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+}
+.label{font-size:13px;font-weight:600;color:var(--text2);margin:0 0 6px 2px;text-transform:uppercase;letter-spacing:.3px}
+input[type="text"],textarea,select{
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;
+  font-size:17px; color:var(--text); font-family:inherit; outline:none;
+}
+textarea{min-height:260px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.segmented{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg);border-radius:10px;padding:3px;border:1px solid var(--border)}
+.segmented button{border:none;background:transparent;padding:10px 6px;border-radius:8px;font-size:15px;font-weight:600;color:var(--text2)}
+.segmented button.active{background:var(--card);color:var(--text);box-shadow:0 0.5px 2px rgba(0,0,0,0.1)}
+.btn{
+  width:100%; min-height:52px; border:none; border-radius:12px; font-size:17px; font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:transform .05s ease,opacity .2s;
+}
+.btn:active{transform:scale(0.98)}
+.btn.primary{background:var(--accent);color:white}
+.btn.primary:active{background:var(--accent-press)}
+.btn.secondary{background:var(--bg);color:var(--accent);border:1px solid var(--border)}
+.btn:disabled{opacity:.4}
+.upload-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.thumb{position:relative;aspect-ratio:1;background:var(--bg);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;border:none;font-size:18px;line-height:1;backdrop-filter:blur(4px)}
+.thumb .num{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:12px;padding:2px 6px;border-radius:6px;backdrop-filter:blur(4px)}
+.empty{padding:28px;text-align:center;color:var(--text2);font-size:15px;border:1px dashed var(--border);border-radius:12px;background:var(--bg)}
+.options{display:grid;gap:12px;margin:14px 0}
+.chip{display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:12px 14px;border-radius:12px;border:1px solid var(--border)}
+.chip select{width:auto;min-width:120px;padding:8px 12px;font-size:16px;background:var(--card)}
+.action-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:0.5px solid var(--border); padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+}
+.action-inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+.toast.show{opacity:1}
+.hidden{display:none !important}
+footer{padding:20px 16px 40px;text-align:center;color:var(--text2);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="h1">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--accent)"/><path d="M14 3v5h5" fill="white" opacity=".3"/><text x="7" y="16" font-size="7" fill="white" font-weight="700">PDF</text></svg>
+      PDF Rápido - iPhone
+    </div>
+  </header>
+
+  <div id="tip" class="tip">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M12 2a1 1 0 0 1 1 1v7h7a1 1 0 1 1 0 2h-7v7a1 1 0 1 1-2 0v-7H4a1 1 0 1 1 0-2h7V3a1 1 0 0 1 1-1z" fill="var(--accent)"/></svg>
+    <div><b>Use como app:</b> abra no Safari → Compartilhar <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align:-2px"><path fill="currentColor" d="M12 3l5 5h-3v6h-4V8H7l5-5zm-7 14v2h14v-2H5z"/></svg> → <b>Adicionar à Tela de Início</b></div>
+    <button id="tipClose" aria-label="Fechar">×</button>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="texto">Texto → PDF</button>
+    <button class="tab-btn" data-tab="fotos">Fotos → PDF</button>
+    <button class="tab-btn" data-tab="mesclar">Mesclar</button>
+  </nav>
+
+  <main>
+    <!-- ABA TEXTO -->
+    <section id="tab-texto">
+      <div class="card">
+        <div class="label">Título (opcional)</div>
+        <input type="text" id="titulo" placeholder="Ex: Anotações da reunião" autocomplete="off">
+      </div>
+      <div class="card">
+        <div class="label">Texto</div>
+        <textarea id="texto" placeholder="Cole ou digite seu texto aqui..."></textarea>
+        <div class="row" style="margin-top:12px">
+          <div>
+            <div class="label">Tamanho</div>
+            <select id="fonte">
+              <option value="12">12 pt</option>
+              <option value="14" selected>14 pt</option>
+              <option value="16">16 pt</option>
+              <option value="18">18 pt</option>
+            </select>
+          </div>
+          <div>
+            <div class="label">Alinhamento</div>
+            <div class="segmented" id="align">
+              <button data-a="left" class="active">◧</button>
+              <button data-a="center">☰</button>
+              <button data-a="right">◨</button>
+              <button data-a="justify">☷</button>
+            </div>
+          </div>
+        <button class="btn primary" id="btnGerarTexto" style="margin-top:16px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
+          Gerar PDF
+        </button>
+      </div>
+    </section>
+
+    <!-- ABA FOTOS -->
+    <section id="tab-fotos" class="hidden">
+      <div class="card">
+        <div class="upload-box">
+          <button class="btn secondary" id="btnAddFotos">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h4l2-2h4l2 2h4v14H4z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2"/></svg>
+            Adicionar Fotos
+          </button>
+          <button class="btn secondary" id="btnCamera">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5l2 3h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h4l2-3z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+            Tirar Foto
+          </button>
+        </div>
+        <input type="file" id="inputFotos" accept="image/*" multiple hidden>
+        <input type="file" id="inputCamera" accept="image/*" capture="environment" hidden>
+        <div id="gridFotos" class="grid"></div>
+        <div id="emptyFotos" class="empty">Nenhuma foto ainda. Toque em Adicionar Fotos.</div>
+        <div class="options">
+          <div class="chip">
+            <span>Tamanho da página</span>
+            <select id="fotoFormato"><option>A4</option><option>Carta</option></select>
+          </div>
+          <div class="chip">
+            <span>Orientação</span>
+            <select id="fotoOrient"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select>
+          </div>
+          <div class="chip">
+            <span>Margem</span>
+            <select id="fotoMargem"><option value="0">Sem</option><option value="20" selected>Pequena</option><option value="40">Média</option></select>
+          </div>
+        </div>
+        <button class="btn primary" id="btnGerarFotos">Criar PDF com fotos</button>
+      </div>
+    </section>
+
+    <!-- ABA MESCLAR -->
+    <section id="tab-mesclar" class="hidden">
+      <div class="card">
+        <div class="upload-box">
+          <button class="btn secondary" id="btnAddMerge">Adicionar Imagens</button>
+          <button class="btn secondary" id="btnCameraMerge">Câmera</button>
+        </div>
+        <input type="file" id="inputMerge" accept="image/*" multiple hidden>
+        <input type="file" id="inputCameraMerge" accept="image/*" capture="environment" hidden>
+        <div id="gridMerge" class="grid"></div>
+        <div id="emptyMerge" class="empty">Adicione imagens para mesclar.</div>
+        <div class="options">
+          <div class="chip">
+            <span>Layout</span>
+            <select id="mergeLayout">
+              <option value="1">1 por página</option>
+              <option value="2">2 por página</option>
+              <option value="4" selected>4 por página (2×2)</option>
+            </select>
+          </div>
+          <div class="chip">
+            <span>Página</span>
+            <select id="mergeFormato"><option>A4</option><option>Carta</option></select>
+          </div>
+          <div class="chip">
+            <span>Orientação</span>
+            <select id="mergeOrient"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select>
+          </div>
+        </div>
+        <button class="btn primary" id="btnGerarMerge">Mesclar em PDF</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="action-bar">
+    <div class="action-inner">
+      <button class="btn secondary" id="btnShare" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3l5 5h-3v6h-4V8H7l5-5zm-7 14v2h14v-2H5z" fill="currentColor"/></svg>
+        Compartilhar
+      </button>
+      <button class="btn primary" id="btnDownload" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Baixar
+      </button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <footer>100% offline • Funciona no Safari • PDF Rápido v1</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const toast = (msg) => { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); };
+
+  // PWA tip
+  const tip = $('#tip');
+  if (window.navigator.standalone || localStorage.getItem('pwaTipClosed')) tip.style.display='none';
+  $('#tipClose').onclick = () => { tip.style.display='none'; localStorage.setItem('pwaTipClosed','1'); };
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ['texto','fotos','mesclar'].forEach(id=>{ $('#tab-'+id).classList.toggle('hidden', btn.dataset.tab!==id); });
+      saveConfig();
+    };
+  });
+
+  // State
+  const state = { lastBlob:null, lastName:'documento.pdf', align:'left', fotos:[], merge:[] };
+  const saveConfig = () => {
+    const cfg = {
+      tab: document.querySelector('.tab-btn.active').dataset.tab,
+      titulo: $('#titulo').value,
+      texto: $('#texto').value,
+      fonte: $('#fonte').value,
+      align: state.align,
+      fotoFormato: $('#fotoFormato').value,
+      fotoOrient: $('#fotoOrient').value,
+      fotoMargem: $('#fotoMargem').value,
+      mergeLayout: $('#mergeLayout').value,
+      mergeFormato: $('#mergeFormato').value,
+      mergeOrient: $('#mergeOrient').value,
+    };
+    localStorage.setItem('pdfrapido', JSON.stringify(cfg));
+  };
+  const loadConfig = () => {
+    try{
+      const cfg = JSON.parse(localStorage.getItem('pdfrapido')||'{}');
+      if(cfg.titulo) $('#titulo').value=cfg.titulo;
+      if(cfg.texto) $('#texto').value=cfg.texto;
+      if(cfg.fonte) $('#fonte').value=cfg.fonte;
+      if(cfg.align){ state.align=cfg.align; document.querySelectorAll('#align button').forEach(b=>b.classList.toggle('active', b.dataset.a===cfg.align)); }
+      if(cfg.fotoFormato) $('#fotoFormato').value=cfg.fotoFormato;
+      if(cfg.fotoOrient) $('#fotoOrient').value=cfg.fotoOrient;
+      if(cfg.fotoMargem) $('#fotoMargem').value=cfg.fotoMargem;
+      if(cfg.mergeLayout) $('#mergeLayout').value=cfg.mergeLayout;
+      if(cfg.mergeFormato) $('#mergeFormato').value=cfg.mergeFormato;
+      if(cfg.mergeOrient) $('#mergeOrient').value=cfg.mergeOrient;
+      if(cfg.tab){ document.querySelector(`[data-tab="${cfg.tab}"]`)?.click(); }
+    }catch{}
+  };
+  ['titulo','texto','fonte','fotoFormato','fotoOrient','fotoMargem','mergeLayout','mergeFormato','mergeOrient'].forEach(id=>{
+    $('#'+id).addEventListener('input', saveConfig);
+  });
+
+  // Align
+  $('#align').onclick = e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    document.querySelectorAll('#align button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); state.align=b.dataset.a; saveConfig();
+  };
+
+  // Enable share/download
+  const setPdf = (blob,name)=>{
+    state.lastBlob=blob; state.lastName=name;
+    $('#btnShare').disabled=false; $('#btnDownload').disabled=false;
+    $('#btnShare').style.opacity=1; $('#btnDownload').style.opacity=1;
+  };
+
+  $('#btnShare').onclick = async ()=>{
+    if(!state.lastBlob) return;
+    try{
+      const file = new File([state.lastBlob], state.lastName, {type:'application/pdf'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:state.lastName, text:'Criado com PDF Rápido'});
+      } else {
+        toast('Compartilhar não suportado. Use Baixar.');
+      }
+    }catch(e){ /* cancelado */ }
+  };
+  $('#btnDownload').onclick = ()=>{
+    if(!state.lastBlob) return;
+    const url = URL.createObjectURL(state.lastBlob);
+    const a = document.createElement('a'); a.href=url; a.download=state.lastName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('PDF salvo');
+  };
+
+  // TEXT -> PDF
+  $('#btnGerarTexto').onclick = () => {
+    const { jsPDF } = window.jspdf;
+    const title = $('#titulo').value.trim();
+    const content = $('#texto').value.trim();
+    if(!content){ toast('Digite um texto'); return; }
+    const fontSize = parseInt($('#fonte').value);
+    const doc = new jsPDF({unit:'pt', format:'a4', orientation:'portrait'});
+    const margin=56; const pageW=doc.internal.pageSize.getWidth(); const pageH=doc.internal.pageSize.getHeight(); const maxW=pageW-margin*2;
+    let y=margin;
+    if(title){
+      doc.setFont('helvetica','bold'); doc.setFontSize(20);
+      doc.text(title, state.align==='center'?pageW/2:state.align==='right'?pageW-margin:margin, y, {align:state.align||'left', maxWidth:maxW});
+      y+=32;
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(fontSize);
+    const lines = doc.splitTextToSize(content, maxW);
+    const lineH = fontSize*1.45;
+    lines.forEach(line=>{
+      if(y>pageH-margin){ doc.addPage(); y=margin; }
+      const x = state.align==='center'?pageW/2:state.align==='right'?pageW-margin:margin;
+      doc.text(line, x, y, {align:state.align==='justify'?'left':state.align, maxWidth:maxW});
+      y+=lineH;
+    });
+    const blob = doc.output('blob');
+    const name = (title||'texto').replace(/[^\w\-]+/g,'_').slice(0,40)+'.pdf';
+    setPdf(blob,name); saveConfig(); toast('PDF de texto criado!');
+  };
+
+  // PHOTOS HANDLING
+  const setupImagePicker = (btnAdd, btnCam, input, inputCam, arr, grid, empty) => {
+    btnAdd.onclick = ()=> input.click();
+    btnCam.onclick = ()=> inputCam.click();
+    const addFiles = files => {
+      [...files].forEach(f=>{
+        if(!f.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+          arr.push({id:Math.random().toString(36).slice(2), data:e.target.result, name:f.name});
+          render();
+        };
+        reader.readAsDataURL(f);
+      });
+    };
+    input.onchange = e => { addFiles(e.target.files); e.target.value=''; };
+    inputCam.onchange = e => { addFiles(e.target.files); e.target.value=''; };
+    const render = ()=>{
+      grid.innerHTML='';
+      empty.style.display = arr.length?'none':'block';
+      arr.forEach((it,i)=>{
+        const d=document.createElement('div'); d.className='thumb'; d.dataset.id=it.id;
+        d.innerHTML=`<img src="${it.data}" alt=""><button class="rm">×</button><span class="num">${i+1}</span>`;
+        d.querySelector('.rm').onclick=()=>{ const idx=arr.findIndex(x=>x.id===it.id); arr.splice(idx,1); render(); };
+        grid.appendChild(d);
+      });
+    };
+    Sortable.create(grid,{animation:150, delay:100, delayOnTouchOnly:true, onEnd:evt=>{
+      const item = arr.splice(evt.oldIndex,1)[0]; arr.splice(evt.newIndex,0,item); render();
+    }});
+    return {render};
+  };
+
+  const fotosUI = setupImagePicker($('#btnAddFotos'),$('#btnCamera'),$('#inputFotos'),$('#inputCamera'),state.fotos,$('#gridFotos'),$('#emptyFotos'));
+  const mergeUI = setupImagePicker($('#btnAddMerge'),$('#btnCameraMerge'),$('#inputMerge'),$('#inputCameraMerge'),state.merge,$('#gridMerge'),$('#emptyMerge'));
+
+  // Generate photos PDF
+  async function createPdfFromImages(images, opts){
+    const { jsPDF } = window.jspdf;
+    const format = opts.format.toLowerCase()==='carta'?'letter':'a4';
+    const doc = new jsPDF({unit:'pt', format, orientation:opts.orientation});
+    const margin = parseInt(opts.margin)||0;
+    const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
+    const maxW = pageW - margin*2; const maxH = pageH - margin*2;
+    for(let i=0;i<images.length;i++){
+      if(i>0) doc.addPage();
+      const img = images[i].data;
+      const props = doc.getImageProperties(img);
+      const r = props.width/props.height;
+      let w=maxW, h=w/r; if(h>maxH){ h=maxH; w=h*r; }
+      const x=(pageW-w)/2; const y=(pageH-h)/2;
+      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', x, y, w, h, undefined, 'FAST');
+    }
+    return doc;
+  }
+
+  $('#btnGerarFotos').onclick = async ()=>{
+    if(state.fotos.length===0){ toast('Adicione fotos primeiro'); return; }
+    const doc = await createPdfFromImages(state.fotos, {
+      format: $('#fotoFormato').value,
+      orientation: $('#fotoOrient').value,
+      margin: $('#fotoMargem').value
+    });
+    const blob = doc.output('blob');
+    setPdf(blob, `fotos_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF com fotos criado!');
+  };
+
+  // Merge layout
+  $('#btnGerarMerge').onclick = async ()=>{
+    if(state.merge.length===0){ toast('Adicione imagens'); return; }
+    const { jsPDF } = window.jspdf;
+    const layout = parseInt($('#mergeLayout').value);
+    const format = $('#mergeFormato').value.toLowerCase()==='carta'?'letter':'a4';
+    const orient = $('#mergeOrient').value;
+    const doc = new jsPDF({unit:'pt', format, orientation:orient});
+    const pageW=doc.internal.pageSize.getWidth(), pageH=doc.internal.pageSize.getHeight();
+    const margin=24, gap=12;
+    const cols = layout===1?1:layout===2?1:2;
+    const rows = layout===1?1:layout===2?2:2;
+    const perPage = cols*rows;
+    const cellW = (pageW - margin*2 - gap*(cols-1)) / cols;
+    const cellH = (pageH - margin*2 - gap*(rows-1)) / rows;
+
+    for(let i=0;i<state.merge.length;i++){
+      const pageIndex = Math.floor(i/perPage);
+      const idxInPage = i%perPage;
+      if(i>0 && idxInPage===0) doc.addPage();
+      const col = idxInPage % cols;
+      const row = Math.floor(idxInPage / cols);
+      const x = margin + col*(cellW+gap);
+      const y = margin + row*(cellH+gap);
+      const img = state.merge[i].data;
+      const props = doc.getImageProperties(img);
+      const r = props.width/props.height;
+      let w=cellW, h=w/r; if(h>cellH){ h=cellH; w=h*r; }
+      const dx = x + (cellW-w)/2; const dy = y + (cellH-h)/2;
+      doc.addImage(img, props.fileType==='PNG'?'PNG':'JPEG', dx, dy, w, h, undefined, 'FAST');
+      // borda sutil
+      doc.setDrawColor(230); doc.setLineWidth(0.5); doc.rect(x,y,cellW,cellH);
+    }
+    const blob = doc.output('blob');
+    setPdf(blob, `mesclado_${layout}x_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('PDF mesclado criado!');
+  };
+
+  // Init
+  loadConfig();
+  fotosUI.render(); mergeUI.render();
+  // iOS fullscreen safe
+  document.addEventListener('touchstart',()=>{}, {passive:true});
+})();
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+</body>
+</html>
